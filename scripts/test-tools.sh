@@ -66,7 +66,7 @@ echo "$out"
 echo "ok: discovery-sync recorded (non-gating)"
 
 # thrift gate: 50 laws wired (durable collateral for the thrift enactment)
-"$DIR/thrift-check.sh" >/dev/null 2>&1 \
-  && echo "ok: thrift green" || { echo "FAIL: thrift green"; fail=1; }
+thrift_out="$("$DIR/thrift-check.sh" 2>&1)" \
+  && echo "ok: thrift green" || { echo "FAIL: thrift green"; printf '%s\n' "$thrift_out"; fail=1; }
 
 [[ $fail -eq 0 ]] && echo "TOOLS-GREEN" || { echo "TOOLS-RED"; exit 1; }
