@@ -48,12 +48,17 @@ kill "$SRV" 2>/dev/null
 # check-kids static shape only: usage error path, no network
 "$DIR/check-kids.sh" 2>/dev/null && { echo "FAIL: check-kids usage error"; fail=1; } || echo "ok: check-kids usage error"
 
-# price-drift must be SYNC on the current tree
+# price-drift must be SYNC where the SlidPhiLabs tree is present; runners
+# without it record a SKIP (same non-gating precedent as discovery-sync).
 SLID="${SLIDPHILABS_ROOT:-/home/ceedotrock/src/SlidPhiLabs}"
-out="$("$DIR/check-price-drift.sh" "$SLID" 2>&1)" \
-  && echo "$out" | grep -q "PRICE-SYNC" \
-  && echo "ok: price-drift SYNC" \
-  || { echo "FAIL: price-drift SYNC ($out)"; fail=1; }
+if [[ -f "$SLID/packages/spl-pay-per-suite/package.json" && -f "$SLID/package.json" && -f "$SLID/docs/site/pricing.json" ]]; then
+  out="$("$DIR/check-price-drift.sh" "$SLID" 2>&1)" \
+    && echo "$out" | grep -q "PRICE-SYNC" \
+    && echo "ok: price-drift SYNC" \
+    || { echo "FAIL: price-drift SYNC ($out)"; fail=1; }
+else
+  echo "SKIP: price-drift (no SlidPhiLabs tree under $SLID)"
+fi
 
 # discovery-sync is recorded but non-gating
 out="$("$DIR/check-discovery-sync.sh" "$SLID" 2>&1)" || true
