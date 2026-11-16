@@ -64,6 +64,6 @@ for sh in "$ROOT"/scripts/*.sh "$ROOT"/gates/*.sh; do
   bash -n "$sh" 2>/dev/null || { echo "GAP: syntax $sh"; syntax_bad=1; }
 done
 [ "$syntax_bad" = 0 ] && echo "ok: scripts parse" || fail=1
-bash "$ROOT/scripts/test-tools.sh" >/dev/null 2>&1 && echo "ok: tools green" || { echo "GAP: tools"; fail=1; }
+tools_out="$(bash "$ROOT/scripts/test-tools.sh" 2>&1)" && echo "ok: tools green" || { echo "GAP: tools"; printf '%s\n' "$tools_out"; fail=1; }
 [ "$fail" = 0 ] && echo "PSI-GREEN: quad complete, 116 wired" || echo "PSI-RED"
 exit "$fail"
