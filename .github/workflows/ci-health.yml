@@ -1,0 +1,71 @@
+name: ci-health
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-health-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  reconcile:
+    name: Reconcile ci-health issue with latest default-branch result
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+    steps:
+      - name: Ensure ci-health label exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create ci-health \
+            --description "Open CI failure on the default branch" \
+            --color "d73a4a" || true
+      - name: Reconcile ci-health issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          default="$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')"
+          echo "Default branch: $default"
+          latest_id="$(gh run list --branch "$default" --limit 10 \
+            --json databaseId,status,conclusion \
+            --jq '[.[] | select(.status == "completed")][0] | .databaseId // empty')"
+          if [ -z "$latest_id" ]; then
+            echo "No completed runs on $default; nothing to reconcile."
+            exit 0
+          fi
+          conclusion="$(gh run view "$latest_id" --json conclusion --jq '.conclusion')"
+          url="$(gh run view "$latest_id" --json url --jq '.url')"
+          echo "Latest completed run on $default: id=$latest_id conclusion=$conclusion url=$url"
+          mapfile -t open_issues < <(gh issue list --label ci-health --state open \
+            --json number --jq 'sort_by(.number) | .[].number')
+          echo "Open ci-health issues: ${open_issues[*]:-<none>}"
+          if [ "$conclusion" = "failure" ]; then
+            if [ "${#open_issues[@]}" -eq 0 ]; then
+              gh issue create --label ci-health \
+                --title "CI health: latest $default run failed" \
+                --body "Latest completed run on \`$default\` failed: $url (run id $latest_id). Investigate and close this issue once CI is green; the weekly ci-health check closes it automatically."
+            elif [ "${#open_issues[@]}" -gt 1 ]; then
+              echo "More than one open ci-health issue; keeping #${open_issues[0]} and closing extras."
+              for n in "${open_issues[@]:1}"; do
+                gh issue close "$n" --comment "Closing duplicate: tracking continues in #${open_issues[0]}."
+              done
+            else
+              echo "One ci-health issue already open (#${open_issues[0]}); nothing to do."
+            fi
+          elif [ "$conclusion" = "success" ]; then
+            if [ "${#open_issues[@]}" -eq 0 ]; then
+              echo "Green and no open ci-health issues; nothing to do."
+            else
+              for n in "${open_issues[@]}"; do
+                gh issue close "$n" --comment "CI is green again on $default (run $url); closing."
+              done
+            fi
+          else
+            echo "Conclusion '$conclusion' is neither failure nor success; leaving issues unchanged."
+          fi

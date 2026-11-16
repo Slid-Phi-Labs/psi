@@ -1,0 +1,8 @@
+version: 2
+updates:
+  # psi has no packaged ecosystems (no package.json, Cargo.toml, go.mod,
+  # composer.json, Dockerfile, or pip manifest); only Actions needs tracking.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
