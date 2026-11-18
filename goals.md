@@ -2,6 +2,9 @@
 
 ## Active
 - [ ] Conductor demo fully reproducible on user machine (needs user-side wrangler run).
+- [ ] Project Kite tracked (2026-10-28, revised in psi-session2b): budget $3,800 (supersedes $4,200); contact Mara Voss; review meeting Friday Nov 13 at 14:00 ET (supersedes Thursday Nov 12, time unchanged); sensors from Northline Parts, quote NL-8841; demo audience 8 (supersedes 12), room booking 'Kite - final'.
+- [ ] Harbor decision PARKED until Friday (2026-10-28): spare GPU box 'harbor', spend cap $60.
+- [ ] psi-session3 task work finished (2026-10-28): current Kite figures verified unchanged ($3,800; Friday Nov 13 14:00 ET; audience 8); revised Kite status note, Harbor cap/box, Northline NL-8841 order line, and Nov 13 calendar line delivered; parked Harbor decision restated in final summary.
 
 ## Done
 - [x] psi system complete: all 59 tweaks wired, psi-doctor green.
